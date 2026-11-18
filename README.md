@@ -14,6 +14,11 @@ first for older pedestrians and street repair?
 so the ranking serves maintenance priority and the level serves same-day
 alerts ([rule sensitivity](#rule-sensitivity)).
 
+**Scope.** Weights and cut-offs are design assumptions, not fitted to fall
+incidents, and there is no field validation. The map needs a complete Shapefile
+(sidecars missing here); `python scripts/rule_sensitivity.py` reruns the rule
+sensitivity check with only pandas.
+
 **Context and role.** Idea proposal, 11th Incheon Public Data Use Competition.
 Software lead in a two-person team.
 
