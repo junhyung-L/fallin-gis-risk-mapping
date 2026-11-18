@@ -28,8 +28,15 @@ Software lead in a two-person team.
   from an elevation surface; hazard counts from four facility layers (ramps,
   stairs/steep slopes, pavement curbs, crosswalk curbs). Notebooks: `경사.ipynb`,
   `경사도계산.ipynb`, `위험도계산_지도시각화.ipynb`.
-- KMA short-term forecast (`TMP`, `REH`, `PTY`, `PCP`, `SNO`, `WSD`), or a
-  fixed winter scenario without `KMA_SERVICE_KEY`.
+- KMA short-term forecast (단기예보, `getVilageFcst`): `TMP`, `REH`, `PTY`,
+  `PCP`, `SNO`, `WSD` for the forecast hour nearest the run time, from the
+  latest issue already served (issued 02, 05, 08, 11, 14, 17, 20, 23 KST,
+  available 10 minutes later). Category strings such as "강수없음",
+  "1mm 미만", "30.0~50.0mm", "0.5cm 미만" are parsed to numbers (a range maps
+  to its lower bound; "below 1 mm" to 0.1). A field that fails to parse is
+  logged and only that factor is skipped. Without `KMA_SERVICE_KEY`, a fixed
+  winter scenario is used. Source: KMA OpenAPI guide for
+  [기상청_단기예보 조회서비스](https://www.data.go.kr/data/15084084/openapi.do).
 - The two `.shp` files in `data/` come without `.dbf`/`.shx` sidecars, so the
   map needs a complete Shapefile supplied by the user.
 
@@ -50,7 +57,7 @@ flowchart LR
 | Slope | > 7 degrees / > 5 degrees | 5 / 3 |
 | Recorded hazards | >= 3 / >= 1 | 5 / 3 |
 | Lighting | label "낮음" or "어두움" (low / dark), or illuminance < 2 lx | 1 |
-| Weather | temp <= 0, humidity >= 90, rain/snow type, precipitation > 0, snowfall > 0, wind >= 5 m/s | 2, 1, 2, 1, 2, 1 |
+| Weather | `TMP` <= 0 °C, `REH` >= 90 %, `PTY` 1–4 (rain, rain/snow, snow, shower), `PCP` > 0 mm, `SNO` > 0 cm, `WSD` >= 5 m/s | 2, 1, 2, 1, 2, 1 |
 
 The lighting column accepts a text label or a numeric lux reading (the
 notebook data holds numbers such as 22786 and 8). A reading below
@@ -94,6 +101,7 @@ yellow-flagged spot (right).*
 
 ```powershell
 python scripts/rule_sensitivity.py        # smoke test, needs only pandas
+python tests/test_weather.py              # KMA parser and slot tests, offline
 
 pip install -r requirements.txt
 python main.py --shapefile "path\to\pedestrian_network.shp"
@@ -101,6 +109,9 @@ python main.py --shapefile "path\to\pedestrian_network.shp"
 
 The map needs GeoPandas, Folium, and a complete Shapefile; `KMA_SERVICE_KEY`
 enables live weather. Writes an HTML map and run log to `results/`.
+The weather tests replay hand-written `getVilageFcst` responses in
+`tests/fixtures/` (no network); `python -m pytest tests` also works if pytest
+is installed.
 
 ## Repository layout
 
@@ -108,6 +119,7 @@ enables live weather. Writes an HTML map and run log to `results/`.
 main.py                     # CLI: load -> weather -> score -> map
 src/                        # GIS loader, KMA weather client, rule scoring, map
 scripts/rule_sensitivity.py # Score/level table on synthetic segments
+tests/                      # Offline KMA forecast parser/slot tests + fixtures
 notebooks/                  # Original slope, lighting/weather, and scoring work
 reports/                    # Competition proposal (Korean)
 images/                     # Proposal map and service mock-up

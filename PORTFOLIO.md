@@ -15,8 +15,8 @@ level serves same-day alerts.
 Idea proposal, 11th Incheon Public Data Use Competition. Software lead in a
 two-person team. The proposal describes a broader service (risk maps, safer
 routing, caregiver alerts, smartphone fall detection); the repository
-implements the core: Shapefile loading and CRS conversion, KMA weather
-retrieval or a demo fallback, rule-based scoring, and the interactive map.
+implements the core: Shapefile loading and CRS conversion, KMA short-term
+forecast (`getVilageFcst`) retrieval or a demo fallback, rule-based scoring, and the interactive map.
 
 **Scope: environmental risk, not clinical prediction.** Falls also depend on
 medical history, medication, strength, balance, and behavior. The prototype
@@ -27,7 +27,7 @@ risk score per pedestrian segment.
 |---|---|---|
 | Terrain | Mean slope degree | Capture walking burden on gradients |
 | Pedestrian environment | Hazard count and illuminance | Represent pavement and visibility conditions |
-| Weather | Temperature, humidity, precipitation, snow, wind | Represent slip or freeze conditions |
+| Weather | KMA `getVilageFcst` `TMP`, `REH`, `PTY`, `PCP`, `SNO`, `WSD` | Represent slip or freeze conditions |
 | Spatial representation | Segment geometry and centroids | Make priorities inspectable on a map |
 
 ## Key decisions
@@ -44,8 +44,10 @@ incident or complaint data is joined.
 **2. Weather per segment or one forecast per run.**
 Options: fetch weather for each KMA grid cell (as the competition notebook
 did), or one forecast per run.
-Choice: one forecast per run in the CLI.
-Why: simpler, one API call.
+Choice: one forecast per run in the CLI: the hour nearest the run time from
+the latest served issue (02–23 KST every 3 hours, available 10 minutes later).
+Why: simpler, one API call. Offline tests (`tests/test_weather.py`) check the
+issue-time choice, slot selection, and parsing of strings like "1mm 미만".
 Cost: weather adds the same 0 to 9 points to every segment, so it moves levels
 but not order; under the fallback winter weather no segment can be Low.
 

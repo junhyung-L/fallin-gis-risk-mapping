@@ -4,6 +4,22 @@ import math
 import pandas as pd
 
 from src.config import DARK_LIGHTING_LABELS, DARK_LUX_THRESHOLD
+from src.weather import parse_precipitation, parse_snowfall
+
+# KMA short-term PTY codes: 1 rain, 2 rain/snow, 3 snow, 4 shower (0 = none).
+PRECIPITATION_TYPES = {'1', '2', '3', '4'}
+
+
+def _weather_value(weather: dict, key: str, parse):
+    """Parse one weather field; return None (factor not scored) when missing or invalid."""
+    value = weather.get(key)
+    if value is None:
+        return None
+    try:
+        return parse(value)
+    except (TypeError, ValueError) as exc:
+        logging.warning("Weather field %s=%r not usable: %s", key, value, exc)
+        return None
 
 
 def is_dark(value, threshold: float = DARK_LUX_THRESHOLD) -> bool:
@@ -36,22 +52,32 @@ class RiskCalculator:
     """Implements the heuristic risk scoring logic for elderly falls."""
     def __init__(self, weather_data: dict):
         self.weather_data = weather_data
+        # Weather is one forecast per run, so its points are computed once.
+        self.weather_points = self.score_weather(weather_data)
+
+    @staticmethod
+    def score_weather(w: dict) -> int:
+        """Weather points (0-9). Each factor is parsed on its own, so one bad
+        value cannot drop the others; see src/weather.py for the KMA formats."""
+        tmp = _weather_value(w, 'TMP', float)
+        reh = _weather_value(w, 'REH', float)
+        pty = _weather_value(w, 'PTY', lambda v: str(int(float(v))))
+        pcp = _weather_value(w, 'PCP', parse_precipitation)
+        sno = _weather_value(w, 'SNO', parse_snowfall)
+        wsd = _weather_value(w, 'WSD', float)
+        score = 0
+        if tmp is not None and tmp <= 0: score += 2
+        if reh is not None and reh >= 90: score += 1
+        if pty in PRECIPITATION_TYPES: score += 2
+        if pcp is not None and pcp > 0: score += 1
+        if sno is not None and sno > 0: score += 2
+        if wsd is not None and wsd >= 5: score += 1
+        return score
 
     def calculate_score(self, row) -> int:
         """Calculates risk score for a single row/segment."""
-        score = 0
-        w = self.weather_data
-
         # 1. Weather Factors
-        try:
-            if float(w.get('TMP', 20)) <= 0: score += 2
-            if float(w.get('REH', 50)) >= 90: score += 1
-            if w.get('PTY', '0') in ['1', '2', '3']: score += 2
-            if float(w.get('PCP', 0)) > 0: score += 1
-            if float(w.get('SNO', 0)) > 0: score += 2
-            if float(w.get('WSD', 0)) >= 5: score += 1
-        except Exception as e:
-            logging.debug(f"Weather scoring error: {e}")
+        score = self.weather_points
 
         # 2. Terrain & Environment Factors
         try:

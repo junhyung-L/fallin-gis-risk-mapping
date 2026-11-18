@@ -15,7 +15,7 @@
 ## 데이터
 
 - 인천 오픈데이터 '이동약자 보행자 네트워크' 인도 폴리곤. 평균 경사는 고도 표면에서, 위험요소 수는 4개 시설 레이어(경사로·계단급경사·보도 턱·횡단보도 턱)에서 계산합니다. 노트북: `경사.ipynb`, `경사도계산.ipynb`, `위험도계산_지도시각화.ipynb`.
-- 기상청 단기예보(`TMP`, `REH`, `PTY`, `PCP`, `SNO`, `WSD`). `KMA_SERVICE_KEY`가 없으면 고정 겨울 시나리오를 씁니다.
+- 기상청 단기예보(`getVilageFcst`)의 `TMP`, `REH`, `PTY`, `PCP`, `SNO`, `WSD`. 이미 제공된 최신 발표분(02·05·08·11·14·17·20·23시 발표, 10분 뒤 제공)에서 실행 시각에 가장 가까운 예보 시각 하나를 고릅니다. '강수없음', '1mm 미만', '30.0~50.0mm', '0.5cm 미만' 같은 범주 문자열은 숫자로 바꾸며(구간은 하한값, '1mm 미만'은 0.1), 해석할 수 없는 항목은 경고를 남기고 그 요인만 건너뜁니다. `KMA_SERVICE_KEY`가 없으면 고정 겨울 시나리오를 씁니다. 출처: [기상청_단기예보 조회서비스](https://www.data.go.kr/data/15084084/openapi.do) 오픈API 활용가이드.
 - `data/`의 `.shp` 파일 두 개에는 `.dbf`/`.shx` 구성 파일이 없어, 지도를 그리려면 사용자가 완전한 Shapefile을 넣어야 합니다.
 
 ## 점수 설계
@@ -35,7 +35,7 @@ flowchart LR
 | 경사 | 7도 초과 / 5도 초과 | 5 / 3 |
 | 기록된 위험요소 | 3개 이상 / 1개 이상 | 5 / 3 |
 | 조도 | 라벨이 '낮음' 또는 '어두움', 또는 조도 2 lx 미만 | 1 |
-| 날씨 | 기온 0도 이하, 습도 90 이상, 비·눈 형태, 강수량 > 0, 적설 > 0, 풍속 5m/s 이상 | 2, 1, 2, 1, 2, 1 |
+| 날씨 | `TMP` 0도 이하, `REH` 90% 이상, `PTY` 1~4(비·비/눈·눈·소나기), `PCP` > 0mm, `SNO` > 0cm, `WSD` 5m/s 이상 | 2, 1, 2, 1, 2, 1 |
 
 조도 컬럼은 텍스트 라벨과 숫자 조도값(lux)을 모두 받습니다(노트북 데이터에는 22786, 8 같은 숫자가 들어 있습니다). `DARK_LUX_THRESHOLD = 2.0` lx(`src/config.py`, `FALLIN_DARK_LUX`로 변경 가능) 미만이면 어두운 것으로 봅니다. 2 lx는 CIE 115:2010을 따르는 EN 13201-2:2015의 보행자 조명 등급 P1~P6(15~2 lx) 중 가장 낮은 평균 조도이므로, 이보다 어두우면 어느 보행자 등급도 충족하지 못합니다. 표준은 영역의 유지 평균 조도를 정하지만, 규칙은 이를 측정값 하나에 적용합니다.
 
@@ -64,12 +64,13 @@ flowchart LR
 
 ```powershell
 python scripts/rule_sensitivity.py        # 스모크 테스트, pandas만 필요
+python tests/test_weather.py              # 기상청 값 파서·예보 시각 선택 테스트, 오프라인
 
 pip install -r requirements.txt
 python main.py --shapefile "path\to\pedestrian_network.shp"
 ```
 
-지도에는 GeoPandas·Folium과 완전한 Shapefile이 필요하고, `KMA_SERVICE_KEY`가 있으면 실제 날씨를 씁니다. HTML 지도와 실행 로그를 `results/`에 저장합니다.
+지도에는 GeoPandas·Folium과 완전한 Shapefile이 필요하고, `KMA_SERVICE_KEY`가 있으면 실제 날씨를 씁니다. HTML 지도와 실행 로그를 `results/`에 저장합니다. 날씨 테스트는 `tests/fixtures/`의 직접 작성한 `getVilageFcst` 응답을 재생하므로 네트워크가 필요 없고, pytest가 있으면 `python -m pytest tests`로도 실행됩니다.
 
 ## 저장소 구조
 
@@ -77,6 +78,7 @@ python main.py --shapefile "path\to\pedestrian_network.shp"
 main.py                     # CLI: 로딩 -> 날씨 -> 점수 -> 지도
 src/                        # GIS 로더, 기상청 클라이언트, 규칙 점수, 지도
 scripts/rule_sensitivity.py # 합성 구간의 점수·등급 표
+tests/                      # 기상청 예보 파서·시각 선택 오프라인 테스트와 샘플 응답
 notebooks/                  # 원본 경사, 조도·날씨, 점수 계산 작업
 reports/                    # 경진대회 제안서
 images/                     # 제안서 지도와 서비스 목업

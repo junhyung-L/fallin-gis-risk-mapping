@@ -1,5 +1,9 @@
-pandas
+# Pinned with == to the versions installed where this code was last run and tested
+# (Python 3.13). geopandas and folium were not installed there, so they are left
+# unpinned; pin them to the versions you install.
+pandas==3.0.1
+requests==2.32.5
 geopandas
 folium
-requests
-xmltodict
+# Optional, for `python -m pytest tests` (the tests also run as `python tests/test_weather.py`).
+# pytest
