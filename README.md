@@ -1,4 +1,4 @@
-# Fallin: Heuristic GIS Fall-Risk Mapping for Older Pedestrians
+# Fallin: A GIS Fall-Risk Mapping Prototype for Older Pedestrians
 
 [한국어](README.ko.md) · [Case study](PORTFOLIO.md)
 
@@ -6,18 +6,16 @@ Scores each pedestrian path segment in Incheon 0–20 for outdoor fall risk from
 slope, recorded hazards, lighting, and weather, and draws the result on an
 interactive map. A transparent rule score, not a fitted fall-prediction model.
 
-**Decision question.** Without fall-incident labels, which segments should be
-flagged first for older pedestrians and street repair?
+**Problem.** Without fall-incident labels, which segments should be flagged
+first for older pedestrians and street repair?
 
-**Result.** Weather sets the risk level more than the segment: one forecast
-adds 0 to 9 of the 20 points to every segment. Under the built-in
-winter fallback, no segment can be Low and any slope above 5 degrees is High.
-In clear weather, only a segment with slope above 7 degrees, three or more
-hazards, and a "dark" lighting label reaches High
-([rule sensitivity](#rule-sensitivity)).
+**Result.** Ranking between segments is set by slope, hazards, and lighting
+(up to 11 points); weather (0–9 points) raises every segment's level together,
+so the ranking serves maintenance priority and the level serves same-day
+alerts ([rule sensitivity](#rule-sensitivity)).
 
-**Context and role.** Idea proposal, 11th Incheon Public Data Use Competition,
-two-person team. CTO / overall software-development lead (proposal role table).
+**Context and role.** Idea proposal, 11th Incheon Public Data Use Competition.
+Software lead in a two-person team.
 
 ## Data
 
@@ -27,8 +25,8 @@ two-person team. CTO / overall software-development lead (proposal role table).
   `경사도계산.ipynb`, `위험도계산_지도시각화.ipynb`.
 - KMA short-term forecast (`TMP`, `REH`, `PTY`, `PCP`, `SNO`, `WSD`), or a
   fixed winter scenario without `KMA_SERVICE_KEY`.
-- The two `.shp` files in `data/` lack `.dbf`/`.shx` sidecars, so segment count
-  and attributes are not readable here.
+- The two `.shp` files in `data/` come without `.dbf`/`.shx` sidecars, so the
+  map needs a complete Shapefile supplied by the user.
 
 ## Scoring design
 
@@ -62,13 +60,13 @@ segments:
 | Slope 8 degrees + 3 hazards + dark | 11, High | 20, High |
 | Slope 8 degrees + 3 hazards + numeric lux value | 10, Medium | 19, High |
 
-- Weather is identical across segments in a run, so ranking comes only from
-  slope, hazards, and lighting (at most 11 points).
+- Weather is identical across segments in a run, so it shifts every segment's
+  level without changing their order.
+- Under the built-in winter fallback no segment can be Low, and any slope above
+  5 degrees is High. In clear weather, only a segment with slope above 7
+  degrees, three or more hazards, and a "dark" lighting label reaches High.
 - Cut-offs matter as much as weights: the notebook's 0–3 low, 4–6 caution,
   7+ high yields more High segments from the same scores.
-- The notebook's lighting column is numeric (for example 22786) but the rule
-  checks text labels, so it never fires and clear-weather scores cannot reach
-  High.
 
 ![Risk map around Inju-daero and a street-level check](images/지도_시각화.png)
 
@@ -76,7 +74,7 @@ segments:
 (left); a field spot check found a crosswalk curb and overpass stairs at a
 yellow-flagged spot (right).*
 
-## Run
+## How to run
 
 ```powershell
 python scripts/rule_sensitivity.py        # smoke test, needs only pandas
@@ -101,15 +99,12 @@ images/                     # Proposal map and service mock-up
 
 ## Limitations
 
-- Weights and cut-offs are design assumptions, not fitted to fall incidents.
-- No incident labels, route outcomes, or field-validation logs; the Inju-daero check is one observation.
-- Proposal targets (for example 85% fall-prediction accuracy) are plans, not results.
-- Proposed app features (safe routing, caregiver alerts, smartphone impact detection) are not built.
+- Weights and cut-offs are design assumptions, not fitted to fall incidents; there are no incident labels or field-validation logs, and the Inju-daero check is one observation.
+- The notebook's lighting column is numeric (for example 22786) while the rule checks text labels, so on that data the lighting point never applies and clear-weather scores cannot reach High.
 - Fallback-weather maps show no real weather.
-- No licence file, so the code is all rights reserved by default.
+- Proposal targets (for example 85% fall-prediction accuracy) and app features (safe routing, caregiver alerts, smartphone impact detection) are plans, not built.
 
 ## Links
 
 - [Case study: decisions and trade-offs](PORTFOLIO.md)
-- [Project review](docs/PROJECT_REVIEW.md)
 - [Competition proposal (Korean)](reports/fallin_incheon_open_data.pdf)
