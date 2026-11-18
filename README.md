@@ -49,8 +49,17 @@ flowchart LR
 |---|---|---:|
 | Slope | > 7 degrees / > 5 degrees | 5 / 3 |
 | Recorded hazards | >= 3 / >= 1 | 5 / 3 |
-| Lighting | label "낮음" or "어두움" (low / dark) | 1 |
+| Lighting | label "낮음" or "어두움" (low / dark), or illuminance < 2 lx | 1 |
 | Weather | temp <= 0, humidity >= 90, rain/snow type, precipitation > 0, snowfall > 0, wind >= 5 m/s | 2, 1, 2, 1, 2, 1 |
+
+The lighting column accepts a text label or a numeric lux reading (the
+notebook data holds numbers such as 22786 and 8). A reading below
+`DARK_LUX_THRESHOLD = 2.0` lx (`src/config.py`, override with `FALLIN_DARK_LUX`)
+counts as dark: 2 lx is the lowest average illuminance among the pedestrian
+lighting classes P1–P6 (15 to 2 lx) in EN 13201-2:2015, which follows
+CIE 115:2010, so a darker reading meets no pedestrian class. The standard
+specifies a maintained average over an area; the rule applies it to a single
+reading.
 
 ## Rule sensitivity
 
@@ -63,13 +72,15 @@ segments:
 | Slope 6 degrees | 3, Low | 12, High |
 | Slope 8 degrees + 3 hazards | 10, Medium | 19, High |
 | Slope 8 degrees + 3 hazards + dark | 11, High | 20, High |
-| Slope 8 degrees + 3 hazards + numeric lux value | 10, Medium | 19, High |
+| Slope 8 degrees + 3 hazards + 3903 lx | 10, Medium | 19, High |
+| Slope 8 degrees + 3 hazards + 1 lx | 11, High | 20, High |
 
 - Weather is identical across segments in a run, so it shifts every segment's
   level without changing their order.
 - Under the built-in winter fallback no segment can be Low, and any slope above
   5 degrees is High. In clear weather, only a segment with slope above 7
-  degrees, three or more hazards, and a "dark" lighting label reaches High.
+  degrees, three or more hazards, and dark lighting (a "dark" label or a
+  reading below 2 lx) reaches High.
 - Cut-offs matter as much as weights: the notebook's 0–3 low, 4–6 caution,
   7+ high yields more High segments from the same scores.
 
@@ -105,7 +116,7 @@ images/                     # Proposal map and service mock-up
 ## Limitations
 
 - Weights and cut-offs are design assumptions, not fitted to fall incidents; there are no incident labels or field-validation logs, and the Inju-daero check is one observation.
-- The notebook's lighting column is numeric (for example 22786) while the rule checks text labels, so on that data the lighting point never applies and clear-weather scores cannot reach High.
+- The 2 lx lighting cut-off comes from a design standard for average illuminance, not from fall data, and a single sensor reading depends on when it was taken.
 - Fallback-weather maps show no real weather.
 - Proposal targets (for example 85% fall-prediction accuracy) and app features (safe routing, caregiver alerts, smartphone impact detection) are plans, not built.
 
@@ -113,3 +124,4 @@ images/                     # Proposal map and service mock-up
 
 - [Case study: decisions and trade-offs](PORTFOLIO.md)
 - [Competition proposal (Korean)](reports/fallin_incheon_open_data.pdf)
+- Lighting threshold source: EN 13201-2:2015 *Road lighting – Part 2: Performance requirements*, P-class table ([reproduced here](https://www.performanceinlighting.com/be/en/en-13201-2-2015)); CIE 115:2010 *Lighting of Roads for Motor and Pedestrian Traffic*

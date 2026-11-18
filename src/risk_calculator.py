@@ -1,5 +1,36 @@
 import logging
+import math
+
 import pandas as pd
+
+from src.config import DARK_LIGHTING_LABELS, DARK_LUX_THRESHOLD
+
+
+def is_dark(value, threshold: float = DARK_LUX_THRESHOLD) -> bool:
+    """Return True when a lighting value counts as dark.
+
+    Accepts a text label ("낮음" / "어두움") or a numeric illuminance in lux.
+    Numeric values below ``threshold`` (default 2.0 lx, the EN 13201-2 / CIE 115
+    P6 class average; see src/config.py) count as dark. Missing values do not.
+    """
+    if value is None:
+        return False
+    if isinstance(value, str):
+        text = value.strip()
+        if text in DARK_LIGHTING_LABELS:
+            return True
+        try:
+            value = float(text)
+        except ValueError:
+            return False
+    try:
+        lux = float(value)
+    except (TypeError, ValueError):
+        return False
+    if math.isnan(lux):
+        return False
+    return lux < threshold
+
 
 class RiskCalculator:
     """Implements the heuristic risk scoring logic for elderly falls."""
@@ -28,8 +59,7 @@ class RiskCalculator:
             if slope > 7: score += 5
             elif slope > 5: score += 3
             
-            lux = row.get('조도', '밝음')
-            if lux in ['낮음', '어두움']: score += 1
+            if is_dark(row.get('조도')): score += 1
             
             risk_count = float(row.get('risk_count', 0))
             if risk_count >= 3: score += 5

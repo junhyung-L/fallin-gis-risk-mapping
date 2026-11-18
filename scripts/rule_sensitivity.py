@@ -29,7 +29,8 @@ SEGMENTS = pd.DataFrame(
         {"segment": "slope 6 deg", "mean_slope_degree": 6.0, "risk_count": 0, "조도": "밝음"},
         {"segment": "slope 8 deg + 3 hazards", "mean_slope_degree": 8.0, "risk_count": 3, "조도": "밝음"},
         {"segment": "slope 8 deg + 3 hazards + dark", "mean_slope_degree": 8.0, "risk_count": 3, "조도": "어두움"},
-        {"segment": "slope 8 deg + 3 hazards + numeric lux", "mean_slope_degree": 8.0, "risk_count": 3, "조도": 3903},
+        {"segment": "slope 8 deg + 3 hazards + 3903 lx", "mean_slope_degree": 8.0, "risk_count": 3, "조도": 3903},
+        {"segment": "slope 8 deg + 3 hazards + 1 lx", "mean_slope_degree": 8.0, "risk_count": 3, "조도": 1.0},
     ]
 )
 

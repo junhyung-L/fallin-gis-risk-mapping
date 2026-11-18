@@ -54,7 +54,7 @@ Options: the notebook's 0–3 / 4–6 / 7+, or higher cut-offs.
 Choice: 0–5 / 6–10 / 11–20 in the CLI.
 Why: higher cut-offs flag fewer segments, which suits a repair-priority list.
 Cost: in clear weather a segment needs slope above 7 degrees, three or more
-hazards, and a dark lighting label to be High. Neither setting was tuned
+hazards, and dark lighting (a "dark" label or a reading below 2 lx) to be High. Neither setting was tuned
 against outcomes, so the cut-off is the first thing to calibrate.
 
 **4. What to do without an API key.**
@@ -74,6 +74,13 @@ was used.
 | Slope 6 degrees | 3, Low | 12, High |
 | Slope 8 degrees + 3 hazards | 10, Medium | 19, High |
 | Slope 8 degrees + 3 hazards + dark | 11, High | 20, High |
+| Slope 8 degrees + 3 hazards + 3903 lx | 10, Medium | 19, High |
+| Slope 8 degrees + 3 hazards + 1 lx | 11, High | 20, High |
+
+The lighting rule accepts a text label or a numeric lux reading; below 2 lx
+counts as dark. 2 lx is the lowest average illuminance among the pedestrian
+lighting classes P1–P6 in EN 13201-2:2015 (following CIE 115:2010), set as
+`DARK_LUX_THRESHOLD` in `src/config.py`.
 
 Pipeline: Shapefile → GeoPandas load and EPSG:4326 conversion → weather fields
 → rule score per segment → Folium HTML map. `GISDataLoader` rejects a source
@@ -86,13 +93,12 @@ a yellow-labeled area contained a crosswalk curb and overpass stairs.
 ## Limitations
 
 - Weights are design assumptions, not coefficients calibrated against observed falls; there are no incident labels or field-validation logs.
-- The lighting rule checks the text labels "낮음" / "어두움" (low / dark), but the notebook's lighting column is numeric (for example 22786), so on that data the lighting point never applies and clear-weather scores top out at 10 (Medium).
+- The 2 lx lighting cut-off comes from a design standard for average illuminance, not from fall data, and a single sensor reading depends on when it was taken.
 - Fallback-weather maps do not represent the weather at any real moment.
 - Accuracy, subscription, and fall-reduction numbers in the proposal (for example an 85% fall-prediction target) are targets, and push alerts, sensor detection, and safer routing are not implemented.
 
 ## Next steps
 
-- Bin numeric lux values before scoring so the lighting rule applies.
 - Join governed fall or pedestrian-safety incidents spatially and calibrate the
   rules with time and spatial separation.
 - Log API call time, coordinates, and responses so a map can be reproduced.
