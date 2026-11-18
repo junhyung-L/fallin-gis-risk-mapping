@@ -9,10 +9,7 @@ interactive map. A transparent rule score, not a fitted fall-prediction model.
 **Problem.** Without fall-incident labels, which segments should be flagged
 first for older pedestrians and street repair?
 
-**Result.** Ranking between segments is set by slope, hazards, and lighting
-(up to 11 points); weather (0–9 points) raises every segment's level together,
-so the ranking serves maintenance priority and the level serves same-day
-alerts ([rule sensitivity](#rule-sensitivity)).
+**Result.** On six test segments, slope, hazards, and lighting (max 11 of 20 points) set the ranking, from 0 for a flat lit path to 11 for steep, hazardous, and dark; weather (max 9) lifts every segment equally, so under the winter fallback no segment is Low. Use the ranking for repair priority and the level for same-day alerts. ([rule sensitivity](#rule-sensitivity))
 
 **Scope.** Weights and cut-offs are design assumptions, not fitted to fall
 incidents, and there is no field validation. The map needs a complete Shapefile
@@ -137,3 +134,7 @@ images/                     # Proposal map and service mock-up
 - [Case study: decisions and trade-offs](PORTFOLIO.md)
 - [Competition proposal (Korean)](reports/fallin_incheon_open_data.pdf)
 - Lighting threshold source: EN 13201-2:2015 *Road lighting – Part 2: Performance requirements*, P-class table ([reproduced here](https://www.performanceinlighting.com/be/en/en-13201-2-2015)); CIE 115:2010 *Lighting of Roads for Motor and Pedestrian Traffic*
+
+## License
+
+No open-source license: the code and documents are public for review; reuse requires permission.

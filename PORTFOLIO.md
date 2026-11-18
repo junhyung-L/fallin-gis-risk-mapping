@@ -7,10 +7,7 @@
 Can terrain, pedestrian-environment, and weather conditions identify outdoor
 segments that deserve an earlier safety warning for older pedestrians? The
 prototype scores each Incheon pedestrian segment 0–20 with explicit rules and
-draws the result on a Folium map. Ranking between segments is set by slope,
-hazards, and lighting (up to 11 points); weather (0–9 points) raises every
-segment's level together, so the ranking serves maintenance priority and the
-level serves same-day alerts.
+draws the result on a Folium map. On six test segments, slope, hazards, and lighting (max 11 of 20 points) set the ranking, from 0 for a flat lit path to 11 for steep, hazardous, and dark; weather (max 9) lifts every segment equally, so under the winter fallback no segment is Low. Use the ranking for repair priority and the level for same-day alerts.
 
 Idea proposal, 11th Incheon Public Data Use Competition. Software lead in a
 two-person team. The proposal describes a broader service (risk maps, safer
